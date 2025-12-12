@@ -80,6 +80,7 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 	github.com/rs/cors v1.11.1
 	github.com/secure-io/sio-go v0.3.1
+	github.com/sergeymakinen/go-bmp v1.0.0
 	github.com/shirou/gopsutil/v3 v3.24.5
 	github.com/tinylib/msgp v1.2.5
 	github.com/valyala/bytebufferpool v1.0.0
