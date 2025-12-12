@@ -19,6 +19,7 @@ package cmd
 
 import (
 	"archive/tar"
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/xml"
@@ -525,6 +526,33 @@ func (api objectAPIHandlers) getObjectHandler(ctx context.Context, objectAPI Obj
 		hash.AddChecksumHeader(w, cs)
 	}
 
+	//TODO:在这里插入对应的处理函数
+	out_reader := gr.Reader
+	op, ok := r.Form["op"]
+	if ok {
+		if op[0] == "crop" {
+			data, err := api.processImage(r, gr)
+			if err != nil {
+				writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
+				return
+			}
+
+			//需要修改objInfo,因为文件大小变化了
+			objInfo.Size = int64(len(data))
+			objInfo.Expires = time.Now()
+			objInfo.ModTime = time.Now()
+			objInfo.UserDefined[strings.ToLower(xhttp.ContentType)] = "image/jpeg"
+
+			out_reader = bytes.NewReader(data)
+		} else {
+			err = fmt.Errorf("op support [crop], but is: %v", op)
+			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
+			return
+		}
+	}
+	// fmt.Println("objInfo.Size:", objInfo.Size)
+	// fmt.Println("UserDefined:\n", objInfo.UserDefined)
+
 	if err = setObjectHeaders(ctx, w, objInfo, rs, opts); err != nil {
 		writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
 		return
@@ -547,7 +575,7 @@ func (api objectAPIHandlers) getObjectHandler(ctx context.Context, objectAPI Obj
 	}
 
 	// Write object content to response body
-	if _, err = xioutil.Copy(httpWriter, gr); err != nil {
+	if _, err = xioutil.Copy(httpWriter, out_reader); err != nil {
 		if !httpWriter.HasWritten() && !statusCodeWritten {
 			// write error response only if no data or headers has been written to client yet
 			writeErrorResponse(ctx, w, toAPIError(ctx, err), r.URL)
