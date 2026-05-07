@@ -1,9 +1,12 @@
 name: Crosscompile
 
 on:
+  push:
+    branches:
+      - lifw_branch
   pull_request:
     branches:
-      - master
+      - lifw_branch
 
 # This ensures that previous jobs for the PR are canceled when the PR is
 # updated.
